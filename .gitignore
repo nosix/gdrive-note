@@ -1,6 +1,9 @@
 # Include your project-specific ignores in this file
 # Read about how to use .gitignore: https://help.github.com/articles/ignoring-files
 # Useful .gitignore templates: https://github.com/github/gitignore
+
+js/properties.js
+
 node_modules
 dist
 out
@@ -94,6 +97,7 @@ fabric.properties
 *.iml
 modules.xml
 .idea/misc.xml
+.idea/jsLibraryMappings.xml
 *.ipr
 
 # End of https://www.toptal.com/developers/gitignore/api/intellij+iml

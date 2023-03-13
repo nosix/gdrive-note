@@ -11,8 +11,8 @@
   <meta property="og:title" content="GDrive Note">
   <meta property="og:description" content="Markdown format notes that can be used in Google Drive.">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="http://note.funmake.jp/">
-  <meta property="og:image" content="http://note.funmake.jp/ogp.jpg">
+  <meta property="og:url" content="https://gnote.funmake.jp/">
+  <meta property="og:image" content="https://gnote.funmake.jp/ogp.jpg">
 
   <meta name="twitter:card" content="summary">
   <meta name="twitter:site" content="@i_nosix">
@@ -32,7 +32,7 @@
 
 <nav>
   <a class="page-title" href=".">Google Drive Note</a>
-  <button id="previewSwitch" class="toggle-secondary-button-off">Preview</button>
+  <button id="authorize" class="toggle-secondary-button-off">起動中</button>
 </nav>
 
 <form>
@@ -40,6 +40,13 @@
     <textarea></textarea>
   </label>
 </form>
+
+<script src="js/preload.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer onload="window.gsiLoaded()"></script>
+<script src="https://apis.google.com/js/api.js" async defer onload="window.gapiLoaded()"></script>
+<script src="js/modernizr-3.11.2.min.js"></script>
+<script src="js/plugins.js"></script>
+<script src="js/main.js"></script>
 
 </body>
 </html>
