@@ -1,0 +1,64 @@
+:root {
+    --off: #8b0000;
+    --on: #006400
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --off: red;
+        --on: #0c0
+    }
+}
+
+nav {
+    display: flex;
+    flex-wrap: wrap-reverse;
+    align-items: center;
+    line-height: 1.2;
+    padding: 1rem 0
+}
+
+.page-title {
+    font-size: 150%;
+    font-weight: 700;
+    margin: 0;
+    padding: .7rem 0 0;
+    border: none;
+    text-decoration: none
+}
+
+#previewSwitch {
+    margin-left: auto;
+    width: 7rem;
+}
+
+.toggle-button {
+    color: var(--bg);
+    border: 1px solid var(--bg)
+}
+
+.toggle-button-off {
+    background: var(--off)
+}
+
+.toggle-button-on {
+    background: var(--on)
+}
+
+.toggle-secondary-button-off {
+    background: var(--bg);
+    color: var(--off);
+    border: 1px solid var(--off)
+}
+
+.toggle-secondary-button-on {
+    background: var(--bg);
+    color: var(--on);
+    border: 1px solid var(--on)
+}
+
+.secondary-button {
+    background: var(--bg);
+    color: var(--accent);
+    border: 1px solid var(--accent)
+}

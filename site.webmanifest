@@ -1,0 +1,13 @@
+{
+  "short_name": "GDrive Note",
+  "name": "Google Drive Note",
+  "icons": [{
+    "src": "icon.png",
+    "type": "image/png",
+    "sizes": "192x192"
+  }],
+  "start_url": "/",
+  "background_color": "#fafafa",
+  "theme_color": "#fafafa",
+  "categories": ["utilities"]
+}

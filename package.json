@@ -1,0 +1,20 @@
+{
+  "name": "gdrive-note",
+  "version": "0.1.0",
+  "description": "",
+  "keywords": [],
+  "license": "",
+  "author": "",
+  "scripts": {
+    "build": "rm -rf dist/* && parcel build *.html",
+    "postbuild": "cp -r public/* dist && cp public/.htaccess dist",
+    "dev": "parcel index.html --open",
+    "start": "npm run build && npm run dev",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "parcel-bundler": "^1.12.4"
+  },
+  "dependencies": {
+  }
+}
