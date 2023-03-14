@@ -8,13 +8,64 @@ const SCOPES = [
     'https://www.googleapis.com/auth/drive.file',
 ].join(' ');
 
-const authButton = document.getElementById('authorize');
-authButton.disabled = true;
-
 let tokenClient;
 let gsiEnabled = false;
 let gapiEnabled = false;
 let apiActivatedListener;
+
+class Modal {
+    constructor(selector, defaultShow) {
+        this.modal = document.querySelector(selector);
+        if (defaultShow) {
+            this.show();
+        }
+    }
+
+    show() {
+        this.modal.classList.add('show-modal');
+    }
+
+    hide() {
+        this.modal.classList.remove('show-modal');
+    }
+}
+
+const modal = new Modal('.modal', true);
+
+const authorize = document.getElementById('authorize');
+authorize.disabled = true;
+authorize.onclick = () => {
+    // ログイン処理を行う
+    tokenClient.callback = async (resp) => {
+        if (resp.error !== undefined) {
+            throw (resp);
+        }
+        disableLogin();
+        if (apiActivatedListener !== undefined) {
+            apiActivatedListener(gapi.client);
+        }
+    };
+
+    if (gapi.client.getToken() === null) {
+        // Prompt the user to select a Google Account and ask for consent to share their data
+        // when establishing a new session.
+        tokenClient.requestAccessToken({prompt: 'consent'});
+    } else {
+        // Skip display of account chooser and consent dialog for an existing session.
+        tokenClient.requestAccessToken({prompt: ''});
+    }
+};
+
+const account = document.getElementById('account');
+account.onclick = () => {
+    // ログアウト処理を行う
+    const token = gapi.client.getToken();
+    if (token !== null) {
+        google.accounts.oauth2.revoke(token.access_token);
+        gapi.client.setToken('');
+        enableLogin();
+    }
+};
 
 function gsiLoaded() {
     tokenClient = google.accounts.oauth2.initTokenClient({
@@ -38,48 +89,17 @@ function gapiLoaded() {
 function maybeEnableButtons() {
     if (gsiEnabled && gapiEnabled) {
         enableLogin();
-        authButton.disabled = false;
+        authorize.disabled = false;
     }
 }
 
 function enableLogin() {
-    authButton.onclick = () => {
-        // ログイン処理を行う
-        tokenClient.callback = async (resp) => {
-            if (resp.error !== undefined) {
-                throw (resp);
-            }
-            disableLogin();
-            if (apiActivatedListener !== undefined) {
-                apiActivatedListener(gapi.client);
-            }
-        };
-
-        if (gapi.client.getToken() === null) {
-            // Prompt the user to select a Google Account and ask for consent to share their data
-            // when establishing a new session.
-            tokenClient.requestAccessToken({prompt: 'consent'});
-        } else {
-            // Skip display of account chooser and consent dialog for an existing session.
-            tokenClient.requestAccessToken({prompt: ''});
-        }
-    };
-    authButton.innerText = 'ログイン';
-    authButton.className = 'toggle-secondary-button-off';
+    authorize.innerText = 'ログイン';
+    modal.show();
 }
 
 function disableLogin() {
-    authButton.onclick = () => {
-        // ログアウト処理を行う
-        const token = gapi.client.getToken();
-        if (token !== null) {
-            google.accounts.oauth2.revoke(token.access_token);
-            gapi.client.setToken('');
-            enableLogin();
-        }
-    };
-    authButton.innerText = 'ログアウト';
-    authButton.className = 'toggle-secondary-button-on';
+    modal.hide();
 }
 
 function isApiActivated() {
