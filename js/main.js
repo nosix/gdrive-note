@@ -15,6 +15,22 @@ class Session {
     }
 }
 
+async function loadPhoto(session) {
+    try {
+        const response = await session.client.people.people.get({
+            resourceName: 'people/me',
+            personFields: 'photos',
+        });
+        console.debug(response);
+        const photo = response.result.photos.shift();
+        if (photo !== undefined) {
+            document.getElementById('account').src = photo.url;
+        }
+    } catch (e) {
+        console.error(e.message);
+    }
+}
+
 async function create(session, folderId) {
     try {
         const response = await session.client.request({
@@ -106,6 +122,7 @@ async function main() {
         const session = new Session(client);
 
         setupEditor(session);
+        await loadPhoto(session);
 
         switch (state.action) {
             case 'create':
