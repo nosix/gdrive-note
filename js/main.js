@@ -15,6 +15,8 @@ class Session {
     }
 }
 
+const defaultPhotoSrc = document.getElementById('account').src;
+
 async function loadPhoto(session) {
     try {
         const response = await session.client.people.people.get({
@@ -22,13 +24,17 @@ async function loadPhoto(session) {
             personFields: 'photos',
         });
         console.debug(response);
-        const photo = response.result.photos.shift();
+        const photo = response.result.photos[0];
         if (photo !== undefined) {
             document.getElementById('account').src = photo.url;
         }
     } catch (e) {
         console.error(e.message);
     }
+}
+
+function unloadPhoto() {
+    document.getElementById('account').src = defaultPhotoSrc;
 }
 
 async function create(session, folderId) {
@@ -50,7 +56,7 @@ async function create(session, folderId) {
 }
 
 async function open(session, ids) {
-    const fileId = ids.shift();
+    const fileId = ids[0];
     if (fileId === undefined) {
         console.error('Cannot open the file because fileId is missing.');
         return;
@@ -98,13 +104,48 @@ function setupEditor(session) {
     const editor = ace.edit('editor');
     editor.commands.addCommand({
         name: 'save',
-        bindKey: { win: 'Ctrl-S', mac: 'Command-S'},
+        bindKey: {win: 'Ctrl-S', mac: 'Command-S'},
         exec: async (editor) => {
             await save(session, editor.getValue());
         },
         readOnly: false,
     });
     session.editor = editor;
+}
+
+function closeEditor() {
+    const editor = ace.edit('editor');
+    editor.destroy();
+    // class属性の値が残り表示されてしまう
+    const classList = editor.container.classList;
+    classList.forEach(className => {
+        if (className.startsWith('ace')) {
+            classList.remove(className);
+        }
+    });
+}
+
+async function apiActivated(state, client) {
+    const session = new Session(client);
+
+    setupEditor(session);
+    await loadPhoto(session);
+
+    switch (state.action) {
+        case 'create':
+            await create(session, state.folderId);
+            break;
+        case 'open':
+            await open(session, state.ids);
+            break;
+        default:
+            console.error(`Unknown action '${state.action}'`)
+    }
+}
+
+function apiDeactivated() {
+    closeEditor();
+    unloadPhoto();
 }
 
 async function main() {
@@ -119,20 +160,10 @@ async function main() {
     console.debug(state);
 
     setOnApiActivated(async (client) => {
-        const session = new Session(client);
-
-        setupEditor(session);
-        await loadPhoto(session);
-
-        switch (state.action) {
-            case 'create':
-                await create(session, state.folderId);
-                break;
-            case 'open':
-                await open(session, state.ids);
-                break;
-            default:
-                console.error(`Unknown action '${state.action}'`)
+        if (client !== null) {
+            await apiActivated(state, client);
+        } else {
+            apiDeactivated();
         }
     });
 }

@@ -66,6 +66,9 @@ account.onclick = () => {
         google.accounts.oauth2.revoke(token.access_token);
         gapi.client.setToken('');
         enableLogin();
+        if (apiActivatedListener !== undefined) {
+            apiActivatedListener(null);
+        }
     }
 };
 
