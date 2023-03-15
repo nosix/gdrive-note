@@ -41,9 +41,40 @@ body>footer {
     border: unset;
 }
 
+#gpt {
+    flex-shrink: 0;
+    font-size: 80%;
+    background-color: var(--accent-bg);
+    padding: 0.3rem 0.5rem;
+}
+
+.gpt-disabled {
+    border: 1px solid var(--disabled);
+}
+
+.gpt-off {
+    border: 1px solid var(--off);
+}
+
+.gpt-on {
+    border: 1px solid var(--on);
+}
+
+#status {
+    flex-grow: 1;
+    font-size: 80%;
+    padding: 0.3rem 0.5rem;
+    text-align: left;
+}
+
 #tips {
-    margin-left: auto;
-    vertical-align: middle;
+    flex-shrink: 0;
+    font-size: 80%;
+    margin-left: 0.5rem;
+}
+
+#tips>kbd {
+    margin-right: 0.5rem;
 }
 
 #viewer {
