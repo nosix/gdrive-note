@@ -1,11 +1,15 @@
 import {marked} from "marked";
 import dompurify from "dompurify";
+import {OpenAIApi, Configuration as OpenAIConfig} from "openai";
+import {parseConfig} from "./config.js";
 
 class Session {
     constructor(client) {
         this.client = client;
         this.editor = null;
         this.viewer = null;
+        this.config = null;
+        this.openai = null;
         this.fileId = null;
         this.edited = false;
     }
@@ -27,6 +31,7 @@ class Session {
     }
 
     onChanged(delta) {
+        this.onChangedConfig(parseConfig(this.editor.getValue()));
         if (this.viewer.isEnabled()) {
             this.viewer.setContent(this.editor.getValue());
         }
@@ -54,6 +59,28 @@ class Session {
     onChangedCursor() {
         const positionRatio = this.editor.getCursorPosition().row / this.editor.session.getLength();
         this.viewer.setScrollTop(positionRatio);
+    }
+
+    onChangedConfig(config) {
+        const gpt = document.getElementById('gpt');
+        const updateOpenAI = () => {
+            const apiKey = config && config.getGptKey();
+            if (!apiKey) {
+                this.openai = null;
+                gpt.classList.remove('gpt-on');
+                gpt.disabled = true;
+                return;
+            }
+            if (!this.config || this.config.getGptKey() !== apiKey) {
+                this.openai = new OpenAIApi(new OpenAIConfig({
+                    apiKey: apiKey
+                }));
+                gpt.classList.add('gpt-on');
+                gpt.disabled = false;
+            }
+        };
+        updateOpenAI();
+        this.config = config;
     }
 }
 

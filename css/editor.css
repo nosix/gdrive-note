@@ -45,24 +45,26 @@ body>footer {
     flex-shrink: 0;
     font-size: 80%;
     background-color: var(--accent-bg);
+    color: var(--text-light);
     padding: 0.3rem 0.5rem;
 }
 
-.gpt-disabled {
+.gpt-default {
     border: 1px solid var(--disabled);
-}
-
-.gpt-off {
-    border: 1px solid var(--off);
 }
 
 .gpt-on {
     border: 1px solid var(--on);
 }
 
+.gpt-error {
+    border: 1px solid var(--off);
+}
+
 #status {
     flex-grow: 1;
     font-size: 80%;
+    color: var(--text-light);
     padding: 0.3rem 0.5rem;
     text-align: left;
 }
@@ -70,6 +72,7 @@ body>footer {
 #tips {
     flex-shrink: 0;
     font-size: 80%;
+    color: var(--text-light);
     margin-left: 0.5rem;
 }
 
@@ -88,37 +91,6 @@ body>footer {
 .toggle-enabled:focus,.toggle-enabled:hover {
     filter: brightness(1.4);
     cursor: pointer
-}
-
-.toggle-button {
-    color: var(--bg);
-    border: 1px solid var(--bg)
-}
-
-.toggle-button-off {
-    background: var(--off)
-}
-
-.toggle-button-on {
-    background: var(--on)
-}
-
-.toggle-secondary-button-off {
-    background: var(--bg);
-    color: var(--off);
-    border: 1px solid var(--off)
-}
-
-.toggle-secondary-button-on {
-    background: var(--bg);
-    color: var(--on);
-    border: 1px solid var(--on)
-}
-
-.secondary-button {
-    background: var(--bg);
-    color: var(--accent);
-    border: 1px solid var(--accent)
 }
 
 .modal {

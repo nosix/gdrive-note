@@ -2,6 +2,10 @@ export class Config {
     constructor(config) {
         this.config = config;
     }
+
+    getGptKey() {
+        return this.config['GPT_KEY'];
+    }
 }
 
 export function parseConfig(text) {
