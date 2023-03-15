@@ -36,7 +36,7 @@ class Session {
     }
 
     markEdited() {
-        const pageTitle = document.getElementById('pageTitle');
+        const pageTitle = document.getElementById('title');
         pageTitle.classList.add('toggle-enabled');
         pageTitle.onclick = async () => {
             await save(this, this.editor.getValue());
@@ -45,7 +45,7 @@ class Session {
     }
 
     clearEdited() {
-        const pageTitle = document.getElementById('pageTitle');
+        const pageTitle = document.getElementById('title');
         pageTitle.classList.remove('toggle-enabled');
         pageTitle.onclick = undefined;
         this.edited = false;
@@ -206,7 +206,7 @@ function setupEditor(session) {
     });
 
     const headerHeight = document.querySelector('nav').offsetHeight;
-    const footerHeight = 16;
+    const footerHeight = document.querySelector('footer').offsetHeight;
     editor.container.style.height = `calc(100vh - ${headerHeight}px - ${footerHeight}px)`
 
     session.editor = editor;

@@ -18,12 +18,9 @@ nav {
     padding: 1rem 0
 }
 
-#pageTitle {
+#title {
     font-size: 150%;
     font-weight: 700;
-    margin: 0;
-    border: none;
-    text-decoration: none
 }
 
 #account {
@@ -34,9 +31,19 @@ nav {
     border-radius: 50%;
 }
 
-#authorize {
-    display: block;
-    margin: 0 auto;
+body>footer {
+    display: flex;
+    flex-wrap: wrap-reverse;
+    align-items: center;
+    line-height: 1.2;
+    padding: 1rem 0;
+    margin: unset;
+    border: unset;
+}
+
+#tips {
+    margin-left: auto;
+    vertical-align: middle;
 }
 
 #viewer {
@@ -112,4 +119,9 @@ nav {
     visibility: visible;
     transform: scale(1.0);
     transition: visibility 0s linear 0s, opacity 0.25s 0s, transform 0.25s;
+}
+
+#authorize {
+    display: block;
+    margin: 0 auto;
 }
