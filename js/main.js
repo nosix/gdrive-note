@@ -144,6 +144,11 @@ function setupEditor(session) {
     editor.session.on('change', (delta) => {
         session.onChanged(delta);
     });
+
+    const headerHeight = document.querySelector('nav').offsetHeight;
+    const footerHeight = 16;
+    editor.container.style.height = `calc(100vh - ${headerHeight}px - ${footerHeight}px)`;
+
     session.editor = editor;
 }
 
