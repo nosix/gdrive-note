@@ -3,6 +3,12 @@ class Session {
         this.client = client;
         this.editor = null;
         this.fileId = null;
+        this.edited = false;
+    }
+
+    setFileId(fileId) {
+        this.fileId = fileId;
+        this.clearEdited();
     }
 
     hasFileId() {
@@ -12,6 +18,30 @@ class Session {
     setContent(content) {
         console.assert(this.editor !== null);
         this.editor.setValue(content, -1);
+        // Undoで戻れるのはコンテンツを設定した直後まで
+        this.editor.session.getUndoManager().reset();
+    }
+
+    onChanged(delta) {
+        if (!this.edited) {
+            this.markEdited();
+        }
+    }
+
+    markEdited() {
+        const pageTitle = document.getElementById('pageTitle');
+        pageTitle.classList.add('toggle-enabled');
+        pageTitle.onclick = async () => {
+            await save(this, this.editor.getValue());
+        };
+        this.edited = true;
+    }
+
+    clearEdited() {
+        const pageTitle = document.getElementById('pageTitle');
+        pageTitle.classList.remove('toggle-enabled');
+        pageTitle.onclick = undefined;
+        this.edited = false;
     }
 }
 
@@ -49,7 +79,7 @@ async function create(session, folderId) {
             }
         });
         console.debug(response);
-        session.fileId = response.result.id;
+        session.setFileId(response.result.id);
     } catch (e) {
         console.error(e.message);
     }
@@ -61,11 +91,10 @@ async function open(session, ids) {
         console.error('Cannot open the file because fileId is missing.');
         return;
     }
-    session.fileId = fileId;
 
     try {
         const response = await session.client.request({
-            path: `/drive/v3/files/${session.fileId}`,
+            path: `/drive/v3/files/${fileId}`,
             method: 'GET',
             params: {
                 alt: 'media'
@@ -73,6 +102,7 @@ async function open(session, ids) {
         });
         console.debug(response);
         session.setContent(response.body);
+        session.setFileId(fileId);
     } catch (e) {
         console.error(e.message);
     }
@@ -94,7 +124,7 @@ async function save(session, content) {
             body: content,
         });
         console.debug(response);
-        session.fileId = response.result.id;
+        session.setFileId(response.result.id);
     } catch (e) {
         console.error(e.message);
     }
@@ -109,6 +139,10 @@ function setupEditor(session) {
             await save(session, editor.getValue());
         },
         readOnly: false,
+    });
+    editor.session.setMode('ace/mode/markdown');
+    editor.session.on('change', (delta) => {
+        session.onChanged(delta);
     });
     session.editor = editor;
 }
