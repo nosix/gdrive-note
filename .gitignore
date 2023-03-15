@@ -2,12 +2,11 @@
 # Read about how to use .gitignore: https://help.github.com/articles/ignoring-files
 # Useful .gitignore templates: https://github.com/github/gitignore
 
-js/properties.js
-
 node_modules
 dist
 out
 .cache
+.env
 
 # Created by https://www.toptal.com/developers/gitignore/api/intellij+iml
 # Edit at https://www.toptal.com/developers/gitignore?templates=intellij+iml
