@@ -1,7 +1,11 @@
+import {marked} from "marked";
+import dompurify from "dompurify";
+
 class Session {
     constructor(client) {
         this.client = client;
         this.editor = null;
+        this.viewer = null;
         this.fileId = null;
         this.edited = false;
     }
@@ -23,6 +27,9 @@ class Session {
     }
 
     onChanged(delta) {
+        if (this.viewer.isEnabled()) {
+            this.viewer.setContent(this.editor.getValue());
+        }
         if (!this.edited) {
             this.markEdited();
         }
@@ -42,6 +49,47 @@ class Session {
         pageTitle.classList.remove('toggle-enabled');
         pageTitle.onclick = undefined;
         this.edited = false;
+    }
+
+    onChangedCursor() {
+        const positionRatio = this.editor.getCursorPosition().row / this.editor.session.getLength();
+        this.viewer.setScrollTop(positionRatio);
+    }
+}
+
+class Viewer {
+    constructor(elementId) {
+        this.container = document.getElementById(elementId);
+    }
+
+    isEnabled() {
+        return this.container.classList.contains('viewer-enabled');
+    }
+
+    setContent(editorContent) {
+        this.container.innerHTML = dompurify.sanitize(marked.parse(editorContent));
+    }
+
+    setScrollTop(positionRatio) {
+        this.container.scrollTop = this.container.scrollHeight * positionRatio - this.container.clientHeight / 2;
+    }
+
+    toggleEnabled(editor) {
+        this.container.classList.toggle('viewer-enabled');
+        if (this.isEnabled()) {
+            this.setContent(editor.getValue());
+            const editorHeight = editor.container.offsetHeight;
+            const viewerHeight = editorHeight / 2;
+            this.container.style.height = `${viewerHeight}px`;
+            editor.container.style.height = `${editorHeight - viewerHeight}px`;
+            editor.resize();
+        } else {
+            const editorHeight = editor.container.offsetHeight;
+            const viewerHeight = this.container.offsetHeight;
+            this.container.style.height = '0px';
+            editor.container.style.height = `${editorHeight + viewerHeight}px`;
+            editor.resize();
+        }
     }
 }
 
@@ -132,6 +180,7 @@ async function save(session, content) {
 
 function setupEditor(session) {
     const editor = ace.edit('editor');
+    const viewer = new Viewer('viewer');
     editor.commands.addCommand({
         name: 'save',
         bindKey: {win: 'Ctrl-S', mac: 'Command-S'},
@@ -140,16 +189,28 @@ function setupEditor(session) {
         },
         readOnly: false,
     });
+    editor.commands.addCommand({
+        name: 'preview',
+        bindKey: {win: 'Ctrl-Alt-P', mac: 'Ctrl-Option-P'},
+        exec: async (editor) => {
+            viewer.toggleEnabled(editor);
+        },
+        readOnly: false,
+    });
     editor.session.setMode('ace/mode/markdown');
     editor.session.on('change', (delta) => {
         session.onChanged(delta);
     });
+    editor.selection.on('changeCursor', () => {
+        session.onChangedCursor();
+    });
 
     const headerHeight = document.querySelector('nav').offsetHeight;
     const footerHeight = 16;
-    editor.container.style.height = `calc(100vh - ${headerHeight}px - ${footerHeight}px)`;
+    editor.container.style.height = `calc(100vh - ${headerHeight}px - ${footerHeight}px)`
 
     session.editor = editor;
+    session.viewer = viewer;
 }
 
 function closeEditor() {
