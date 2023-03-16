@@ -11,6 +11,7 @@ class Session {
         this.config = null;
         this.openai = null;
         this.fileId = null;
+        // テキスト変更後、ファイルを保存するまで true
         this.edited = false;
     }
 
