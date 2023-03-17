@@ -1,10 +1,9 @@
 name: Deploy the site with GitHub Pages
 
 on:
-  # Runs on pushes targeting the default branch
   push:
-    branches: ["main"]
-
+    branches:
+      - main
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -20,10 +19,44 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Build job
-  build:
+  deploy-function:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Authentication
+        uses: google-github-actions/auth@v1
+        with:
+          workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.SERVICE_ACCOUNT }}
+      - name: Deploy function
+        uses: google-github-actions/deploy-cloud-functions@v1
+        with:
+          name: backend
+          runtime: nodejs16
+          env_vars: GPT_KEY=${{ secrets.GPT_KEY }},ORIGIN=${{ secrets.ORIGIN }},WITH_AUTH=${{ env.WITH_AUTH }}
+      - name: Save URL of Cloud Function
+        run: echo "${{ steps.deploy.outputs.url }}" > url.txt
+      - name: Upload URL
+        uses: actions/upload-artifact@v2
+        with:
+          name: function-url
+          path: url.txt
+
+  build-frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: deploy-function
+    steps:
+      - name: Download URL
+        uses: actions/download-artifact@v2
+        with:
+          name: function-url
+      - name: Set env variable from artifact
+        run: |
+          url=$(cat function-url/url.txt)
+          echo "GPT_FUNCTION_URL=url" >> $GITHUB_ENV
       - name: Checkout
         uses: actions/checkout@v3
       - name: Setup Pages
@@ -35,20 +68,19 @@ jobs:
       - name: Build
         env:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
-          GPT_FUNCTION_URL: ${{ env.GPT_FUNCTION_URL }}
         run: npm run build
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:
           path: dist/
 
-  # Deployment job
-  deploy:
+  deploy-pages:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    needs: build
+    timeout-minutes: 5
+    needs: build-frontend
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
