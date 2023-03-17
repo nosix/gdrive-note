@@ -1,4 +1,4 @@
-import {CLIENT_ID} from "./properties"
+import {CLIENT_ID} from "./properties.js"
 
 const DISCOVERY_DOCS = [
     'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest',

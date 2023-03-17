@@ -35,6 +35,7 @@ jobs:
       - name: Build
         env:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          GPT_FUNCTION_URL: ${{ env.GPT_FUNCTION_URL }}
         run: npm run build
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1

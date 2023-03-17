@@ -1,5 +1,5 @@
 import {expect} from "chai";
-import {parseConfig} from "../js/config.js";
+import {parseConfig} from "../frontend/js/config.js";
 
 describe('parseConfig test', () => {
     it('空白を含んでも解析される', () => {
