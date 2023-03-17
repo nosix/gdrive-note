@@ -1,7 +1,9 @@
-import {marked} from "marked";
-import dompurify from "dompurify";
-import {OpenAIApi, Configuration as OpenAIConfig} from "openai";
-import {parseConfig} from "./config.js";
+import {marked} from 'marked';
+import dompurify from 'dompurify';
+import axios from 'axios';
+import {parseConfig} from './config.js';
+
+const GPT_FUNCTION_URL = process.env.GPT_FUNCTION_URL;
 
 class Session {
     constructor(client) {
@@ -9,7 +11,6 @@ class Session {
         this.editor = null;
         this.viewer = null;
         this.config = null;
-        this.openai = null;
         this.fileId = null;
         // テキスト変更後、ファイルを保存するまで true
         this.edited = false;
@@ -64,23 +65,7 @@ class Session {
 
     onChangedConfig(config) {
         const gpt = document.getElementById('gpt');
-        const updateOpenAI = () => {
-            const apiKey = config && config.getGptKey();
-            if (!apiKey) {
-                this.openai = null;
-                gpt.classList.remove('gpt-on');
-                gpt.disabled = true;
-                return;
-            }
-            if (!this.config || this.config.getGptKey() !== apiKey) {
-                this.openai = new OpenAIApi(new OpenAIConfig({
-                    apiKey: apiKey
-                }));
-                gpt.classList.add('gpt-on');
-                gpt.disabled = false;
-            }
-        };
-        updateOpenAI();
+        gpt.classList.remove('gpt-error');
         this.config = config;
     }
 }
@@ -206,11 +191,34 @@ async function save(session, content) {
     }
 }
 
+async function completion(session) {
+    // FIXME id_token を取得できない
+    const requestHeader = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.client.getToken().id_token}`,
+    };
+    const requestBody = {
+        model: session.config.getGptModel(),
+        prompt: session.editor.getSelectedText(),
+        temperature: session.config.getGptTemperature(),
+        max_tokens: session.config.getGptMaxTokens(),
+    };
+    try {
+        const response = await axios.post(GPT_FUNCTION_URL, requestBody, {headers: requestHeader});
+        console.debug(response.data);
+        // TODO insert result into editor
+    } catch (e) {
+        const gpt = document.getElementById('gpt');
+        gpt.classList.add('gpt-error');
+        console.error(e);
+    }
+}
+
 function setupEditor(session) {
     const editor = ace.edit('editor');
     const viewer = new Viewer('viewer');
     editor.commands.addCommand({
-        name: 'save',
+        name: 'Save',
         bindKey: {win: 'Ctrl-S', mac: 'Command-S'},
         exec: async (editor) => {
             await save(session, editor.getValue());
@@ -218,10 +226,19 @@ function setupEditor(session) {
         readOnly: false,
     });
     editor.commands.addCommand({
-        name: 'preview',
+        name: 'Preview',
         bindKey: {win: 'Ctrl-Alt-P', mac: 'Ctrl-Option-P'},
         exec: async (editor) => {
             viewer.toggleEnabled(editor);
+        },
+        readOnly: true,
+        scrollIntoView: "cursor",
+    });
+    editor.commands.addCommand({
+        name: 'GPT completion',
+        bindKey: {win: 'Ctrl-Space', mac: 'Ctrl-Space'},
+        exec: async () => {
+            await completion(session);
         },
         readOnly: false,
     });

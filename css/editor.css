@@ -49,10 +49,6 @@ body>footer {
     padding: 0.3rem 0.5rem;
 }
 
-.gpt-default {
-    border: 1px solid var(--disabled);
-}
-
 .gpt-on {
     border: 1px solid var(--on);
 }

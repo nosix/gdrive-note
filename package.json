@@ -5,21 +5,29 @@
   "keywords": [],
   "license": "",
   "author": "",
+  "main": "index.js",
   "type": "module",
   "scripts": {
     "build": "rm -rf dist/* && parcel build *.html",
     "postbuild": "cp -r public/* dist && cp public/.htaccess dist",
     "preview": "parcel index.html --open",
+    "start": "functions-framework --target=completion",
     "test": "mocha"
-  },
-  "devDependencies": {
-    "parcel-bundler": "^1.12.4",
-    "mocha": "^10.2.0",
-    "chai": "^4.3.7"
   },
   "dependencies": {
     "marked": "^4.2.12",
     "dompurify": "^3.0.1",
-    "openai": "^3.2.1"
+    "axios": "^1.3.4",
+    "@google-cloud/functions-framework": "^3.1.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "openai": "^3.2.1",
+    "google-auth-library": "^8.7.0"
+  },
+  "devDependencies": {
+    "parcel-bundler": "^1.12.4",
+    "mocha": "^10.2.0",
+    "chai": "^4.3.7",
+    "axios": "^1.3.4"
   }
 }
