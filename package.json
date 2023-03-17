@@ -11,7 +11,7 @@
     "build": "rm -rf dist/* && parcel build *.html",
     "postbuild": "cp -r public/* dist && cp public/.htaccess dist",
     "preview": "parcel index.html --open",
-    "start": "functions-framework --target=completion",
+    "start": "functions-framework --target=backend",
     "test": "mocha"
   },
   "dependencies": {
@@ -22,7 +22,8 @@
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
     "openai": "^3.2.1",
-    "google-auth-library": "^8.7.0"
+    "jsonwebtoken": "^9.0.0",
+    "googleapis": "^113.0.0"
   },
   "devDependencies": {
     "parcel-bundler": "^1.12.4",

@@ -1,5 +1,6 @@
 export class Config {
     constructor(config) {
+        config = config || {};
         this._gptModel = config['GPT_MODEL'] || 'gpt-3.5-turbo';
         const temperature = config['GPT_TEMPERATURE'];
         this._gptTemperature = temperature !== undefined && temperature >= 0 ? temperature : 0.1;

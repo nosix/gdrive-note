@@ -1,7 +1,7 @@
 import {marked} from 'marked';
 import dompurify from 'dompurify';
 import axios from 'axios';
-import {parseConfig} from './config.js';
+import {parseConfig, Config} from './config.js';
 
 const GPT_FUNCTION_URL = process.env.GPT_FUNCTION_URL;
 
@@ -10,8 +10,9 @@ class Session {
         this.client = client;
         this.editor = null;
         this.viewer = null;
-        this.config = null;
+        this.config = new Config();
         this.fileId = null;
+        this.idToken = null;
         // テキスト変更後、ファイルを保存するまで true
         this.edited = false;
     }
@@ -192,11 +193,29 @@ async function save(session, content) {
 }
 
 async function completion(session) {
-    // FIXME id_token を取得できない
-    const requestHeader = {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.client.getToken().id_token}`,
-    };
+    const gpt = document.getElementById('gpt');
+    if (session.idToken == null) {
+        const config = {
+            headers: {
+                'Authorization': `Bearer ${session.client.getToken().access_token}`,
+            }
+        }
+        try {
+            const response = await axios.post(`${GPT_FUNCTION_URL}/auth`, '', config);
+            console.debug(response.data);
+            session.idToken = response.data.id_token;
+        } catch (e) {
+            gpt.classList.add('gpt-error');
+            console.error(e);
+            return;
+        }
+    }
+    const config = {
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.idToken}`,
+        }
+    }
     const requestBody = {
         model: session.config.getGptModel(),
         prompt: session.editor.getSelectedText(),
@@ -204,11 +223,10 @@ async function completion(session) {
         max_tokens: session.config.getGptMaxTokens(),
     };
     try {
-        const response = await axios.post(GPT_FUNCTION_URL, requestBody, {headers: requestHeader});
+        const response = await axios.post(`${GPT_FUNCTION_URL}/completion`, requestBody, config);
         console.debug(response.data);
         // TODO insert result into editor
     } catch (e) {
-        const gpt = document.getElementById('gpt');
         gpt.classList.add('gpt-error');
         console.error(e);
     }
