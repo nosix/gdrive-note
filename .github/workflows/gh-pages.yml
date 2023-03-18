@@ -60,9 +60,7 @@ jobs:
         with:
           name: function-url
       - name: Set env variable from artifact
-        run: |
-          url=$(cat function-url/url.txt)
-          echo "GPT_FUNCTION_URL=url" >> $GITHUB_ENV
+        run: echo "GPT_FUNCTION_URL=$(cat url.txt)" >> $GITHUB_ENV
       - name: Checkout
         uses: actions/checkout@v3
       - name: Setup Pages
