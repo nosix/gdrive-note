@@ -9,7 +9,7 @@
   "main": "backend/index.js",
   "scripts": {
     "build": "rm -rf dist/* && parcel build frontend/*.html",
-    "postbuild": "cp -r frontend/static/{*,.htaccess} dist",
+    "postbuild": "cp -r frontend/static/*  frontend/static/.htaccess dist",
     "preview": "parcel frontend/index.html --open",
     "start": "cd backend && npm run start",
     "test": "mocha"
