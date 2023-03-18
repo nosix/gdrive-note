@@ -1,0 +1,21 @@
+{
+  "name": "gdrive-note-backend",
+  "version": "0.1.0",
+  "description": "",
+  "keywords": [],
+  "license": "Apache 2.0",
+  "author": "nosix",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "functions-framework --target=backend"
+  },
+  "dependencies": {
+    "@google-cloud/functions-framework": "^3.1.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "openai": "^3.2.1",
+    "jsonwebtoken": "^9.0.0",
+    "googleapis": "^113.0.0"
+  }
+}

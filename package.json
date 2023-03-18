@@ -11,7 +11,7 @@
     "build": "rm -rf dist/* && parcel build frontend/*.html",
     "postbuild": "cp -r frontend/static/{*,.htaccess} dist",
     "preview": "parcel frontend/index.html --open",
-    "start": "functions-framework --target=backend",
+    "start": "cd backend && npm run start",
     "test": "mocha"
   },
   "dependencies": {
