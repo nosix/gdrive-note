@@ -26,7 +26,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Authentication
-        id: auth
         uses: google-github-actions/auth@v1
         with:
           workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
