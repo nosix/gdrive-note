@@ -10,8 +10,8 @@
   "scripts": {
     "build": "rm -rf dist/* && parcel build frontend/*.html",
     "postbuild": "cp -r frontend/static/*  frontend/static/.htaccess dist",
-    "preview": "parcel frontend/index.html --open",
-    "start": "cd backend && npm run start",
+    "frontend": "parcel frontend/index.html --open",
+    "backend": "cd backend && npm run start",
     "test": "mocha"
   },
   "dependencies": {
