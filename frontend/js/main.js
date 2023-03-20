@@ -255,7 +255,7 @@ function setupEditor(session) {
     });
     editor.commands.addCommand({
         name: 'GPT completion',
-        bindKey: {win: 'Ctrl-Alt-Space', mac: 'Ctrl-Option-Space'},
+        bindKey: {win: 'Alt-Space', mac: 'Option-Space'},
         exec: async () => {
             await completion(session);
         },
