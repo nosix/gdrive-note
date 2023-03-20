@@ -1,11 +1,33 @@
+/**
+ * テキスト先頭に記述した HTML コメント内に記述した JSON 形式の設定
+ * 例:
+ * <!--{
+ *   "ACE_OPTIONS": {
+ *     "fontSize": 16,
+ *     "keyboardHandler": "ace/keyboard/emacs"
+ *   }
+ * }-->
+ */
 export class Config {
     constructor(config) {
         config = config || {};
+        this._aceOptions = config['ACE_OPTIONS'] || {};
+
         this._gptModel = config['GPT_MODEL'] || 'gpt-3.5-turbo';
         const temperature = config['GPT_TEMPERATURE'];
         this._gptTemperature = temperature !== undefined && temperature >= 0 ? temperature : 0.1;
         const maxTokens = config['GPT_MAX_TOKENS'];
         this._gptMaxToken = maxTokens !== undefined && maxTokens > 0 ? maxTokens : 256;
+    }
+
+    /**
+     * Ace Editor の設定 (key: ACE_OPTIONS)
+     * @see https://github.com/ajaxorg/ace/wiki/Configuring-Ace
+     * @see https://codepen.io/zymawy/pen/XwbxoJ
+     * @returns {string} JSON
+     */
+    getAceOptions() {
+        return this._aceOptions;
     }
 
     /**

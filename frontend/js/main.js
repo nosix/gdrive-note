@@ -67,6 +67,7 @@ class Session {
     onChangedConfig(config) {
         const gpt = document.getElementById('gpt');
         gpt.classList.remove('gpt-error');
+        this.editor.setOptions(config.getAceOptions());
         this.config = config;
     }
 }
@@ -254,7 +255,7 @@ function setupEditor(session) {
     });
     editor.commands.addCommand({
         name: 'GPT completion',
-        bindKey: {win: 'Ctrl-Space', mac: 'Ctrl-Space'},
+        bindKey: {win: 'Ctrl-Alt-Space', mac: 'Ctrl-Option-Space'},
         exec: async () => {
             await completion(session);
         },
