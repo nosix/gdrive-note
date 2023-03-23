@@ -1,9 +1,13 @@
 export class Content {
 
     static create(tokenInfo, state, callback) {
-        ContentOnWeb.create(tokenInfo, state, (impl) => {
-            callback(new Content(impl));
-        });
+        if (window.content) {
+            callback(new Content(new ContentOnAndroid(window.content)));
+        } else {
+            ContentOnWeb.create(tokenInfo, state, (impl) => {
+                callback(new Content(impl));
+            });
+        }
     }
 
     constructor(impl) {
@@ -19,7 +23,7 @@ export class Content {
     }
 
     async saveText(text) {
-        await this.__impl.saveText(test);
+        await this.__impl.saveText(text);
     }
 }
 
@@ -82,7 +86,7 @@ class ContentOnWeb {
                 body: {
                     name: 'NewFile.md',
                     mimeType: 'text/markdown',
-                    parents: [this.__state.folderId],
+                    parents: [this.__state.folderId()],
                 }
             });
             console.debug(response);
@@ -93,8 +97,8 @@ class ContentOnWeb {
     }
 
     async loadText() {
-        const fileId = this.__state.ids[0];
-        if (fileId === undefined) {
+        const fileId = this.__state.fileId();
+        if (fileId === null) {
             console.error('Cannot open the file because fileId is missing.');
             return;
         }
@@ -136,5 +140,20 @@ class ContentOnWeb {
         } catch (e) {
             console.error(e.message);
         }
+    }
+}
+
+class ContentOnAndroid {
+
+    constructor(content) {
+        this.__content = content;
+    }
+
+    async loadText() {
+        return this.__content.loadText();
+    }
+
+    async saveText(text) {
+        this.__content.saveText(text);
     }
 }

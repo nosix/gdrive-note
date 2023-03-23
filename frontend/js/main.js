@@ -1,6 +1,7 @@
 import {marked} from 'marked';
 import dompurify from 'dompurify';
 import axios from 'axios';
+import {State} from './state';
 import {Content} from './content.js';
 import {listenIdToken} from './idtoken.js';
 import {getTokenInfo} from './tokeninfo.js';
@@ -110,14 +111,8 @@ class Viewer {
     }
 }
 
-const defaultPictureSrc = document.getElementById('account').src;
-
 function loadPicture(url) {
     document.getElementById('account').src = url;
-}
-
-function unloadPicture() {
-    document.getElementById('account').src = defaultPictureSrc;
 }
 
 async function completion(session) {
@@ -200,7 +195,7 @@ async function main() {
             .split('&')
             .map((s) => s.split('='))
     );
-    const state = JSON.parse(decodeURIComponent(queryParam.get('state')));
+    const state = new State(queryParam.get('state'));
     console.debug(state);
 
     listenIdToken(async (idToken) => {
@@ -211,7 +206,7 @@ async function main() {
             const session = new Session(idToken, content);
             setupEditor(session);
 
-            switch (state.action) {
+            switch (state.action()) {
                 case 'create':
                     await content.create();
                     break;
@@ -220,7 +215,7 @@ async function main() {
                     session.setText(text);
                     break;
                 default:
-                    console.error(`Unknown action '${state.action}'`)
+                    console.error(`Unknown action '${state.action()}'`)
             }
         });
     });
