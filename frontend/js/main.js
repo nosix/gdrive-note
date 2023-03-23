@@ -15,18 +15,8 @@ class Session {
         this.config = new Config();
         this.editor = null;
         this.viewer = null;
-        this.fileId = null;
         // テキスト変更後、ファイルを保存するまで true
         this.edited = false;
-    }
-
-    setFileId(fileId) {
-        this.fileId = fileId;
-        this.clearEdited();
-    }
-
-    hasFileId() {
-        return this.fileId !== null;
     }
 
     setText(text) {
@@ -51,6 +41,7 @@ class Session {
         pageTitle.classList.add('toggle-enabled');
         pageTitle.onclick = async () => {
             await this.content.saveText(this.editor.getValue());
+            this.clearEdited();
         };
         this.edited = true;
     }
@@ -213,6 +204,7 @@ async function main() {
                 case 'open':
                     const text = await content.loadText();
                     session.setText(text);
+                    session.clearEdited();
                     break;
                 default:
                     console.error(`Unknown action '${state.action()}'`)
