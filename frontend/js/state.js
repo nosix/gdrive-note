@@ -11,7 +11,7 @@ export class State {
 
     action() {
         if (this.__state) {
-            return this.__state;
+            return this.__state.action;
         } else {
             return 'open';
         }
