@@ -44,19 +44,20 @@
   <div id="tips"><kbd>F1</kbd>Command Palette</div>
 </footer>
 
-<div class="modal">
-  <div class="modal-content">
-    <button id="authorize">起動中</button>
-  </div>
-</div>
-
 <script src="js/modernizr-3.11.2.min.js"></script>
 <script src="js/plugins.js"></script>
-<script src="js/preload.js"></script>
-<script src="https://accounts.google.com/gsi/client" onload="window.gsiLoaded()"></script>
-<script src="https://apis.google.com/js/api.js" onload="window.gapiLoaded()"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.15.3/ace.min.js"></script>
 <script src="js/main.js"></script>
+
+<!-- Google Identity Services -->
+
+<div id="g_id_onload"
+     data-context="signin"
+     data-auto_select="true"
+     data-itp_support="true">
+</div>
+<script src="js/authentication.js"></script>
+<script src="https://accounts.google.com/gsi/client" defer></script>
 
 </body>
 </html>

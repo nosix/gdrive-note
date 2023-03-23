@@ -1,18 +1,20 @@
 import {marked} from 'marked';
 import dompurify from 'dompurify';
 import axios from 'axios';
+import {Content} from './content.js';
+import {listenIdToken} from './idtoken.js';
+import {getTokenInfo} from './tokeninfo.js';
 import {parseConfig, Config} from './config.js';
-
-const GPT_FUNCTION_URL = process.env.GPT_FUNCTION_URL;
+import {GPT_FUNCTION_URL} from './properties.js';
 
 class Session {
-    constructor(client) {
-        this.client = client;
+    constructor(idToken, content) {
+        this.idToken = idToken;
+        this.content = content;
+        this.config = new Config();
         this.editor = null;
         this.viewer = null;
-        this.config = new Config();
         this.fileId = null;
-        this.idToken = null;
         // テキスト変更後、ファイルを保存するまで true
         this.edited = false;
     }
@@ -26,9 +28,9 @@ class Session {
         return this.fileId !== null;
     }
 
-    setContent(content) {
+    setText(text) {
         console.assert(this.editor !== null);
-        this.editor.setValue(content, -1);
+        this.editor.setValue(text, -1);
         // Undoで戻れるのはコンテンツを設定した直後まで
         this.editor.session.getUndoManager().reset();
     }
@@ -47,7 +49,7 @@ class Session {
         const pageTitle = document.getElementById('title');
         pageTitle.classList.add('toggle-enabled');
         pageTitle.onclick = async () => {
-            await save(this, this.editor.getValue());
+            await this.content.saveText(this.editor.getValue());
         };
         this.edited = true;
     }
@@ -108,108 +110,21 @@ class Viewer {
     }
 }
 
-const defaultPhotoSrc = document.getElementById('account').src;
+const defaultPictureSrc = document.getElementById('account').src;
 
-async function loadPhoto(session) {
-    try {
-        const response = await session.client.people.people.get({
-            resourceName: 'people/me',
-            personFields: 'photos',
-        });
-        console.debug(response);
-        const photo = response.result.photos[0];
-        if (photo !== undefined) {
-            document.getElementById('account').src = photo.url;
-        }
-    } catch (e) {
-        console.error(e.message);
-    }
+function loadPicture(url) {
+    document.getElementById('account').src = url;
 }
 
-function unloadPhoto() {
-    document.getElementById('account').src = defaultPhotoSrc;
-}
-
-async function create(session, folderId) {
-    try {
-        const response = await session.client.request({
-            path: '/drive/v3/files',
-            method: 'POST',
-            body: {
-                name: 'sample.md',
-                mimeType: 'text/markdown',
-                parents: [folderId],
-            }
-        });
-        console.debug(response);
-        session.setFileId(response.result.id);
-    } catch (e) {
-        console.error(e.message);
-    }
-}
-
-async function open(session, ids) {
-    const fileId = ids[0];
-    if (fileId === undefined) {
-        console.error('Cannot open the file because fileId is missing.');
-        return;
-    }
-
-    try {
-        const response = await session.client.request({
-            path: `/drive/v3/files/${fileId}`,
-            method: 'GET',
-            params: {
-                alt: 'media'
-            }
-        });
-        console.debug(response);
-        session.setContent(response.body);
-        session.setFileId(fileId);
-    } catch (e) {
-        console.error(e.message);
-    }
-}
-
-async function save(session, content) {
-    if (!session.hasFileId()) {
-        return;
-    }
-
-    try {
-        const response = await session.client.request({
-            path: `/upload/drive/v3/files/${session.fileId}`,
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'text/markdown',
-                'Content-Length': new TextEncoder().encode(content).length,
-            },
-            body: content,
-        });
-        console.debug(response);
-        session.setFileId(response.result.id);
-    } catch (e) {
-        console.error(e.message);
-    }
+function unloadPicture() {
+    document.getElementById('account').src = defaultPictureSrc;
 }
 
 async function completion(session) {
     const gpt = document.getElementById('gpt');
     if (session.idToken == null) {
-        const config = {
-            headers: {
-                'Authorization': `Bearer ${session.client.getToken().access_token}`,
-            }
-        }
-        try {
-            const response = await axios.post(`${GPT_FUNCTION_URL}/auth`, '', config);
-            console.debug(response.data);
-            session.idToken = response.data.id_token;
-        } catch (e) {
-            gpt.classList.add('gpt-error');
-            console.error(e);
-            return;
-        }
+        gpt.classList.add('gpt-error');
+        return;
     }
     const config = {
         headers: {
@@ -240,7 +155,7 @@ function setupEditor(session) {
         name: 'Save',
         bindKey: {win: 'Ctrl-S', mac: 'Command-S'},
         exec: async (editor) => {
-            await save(session, editor.getValue());
+            await session.content.saveText(editor.getValue());
         },
         readOnly: false,
     });
@@ -277,41 +192,6 @@ function setupEditor(session) {
     session.viewer = viewer;
 }
 
-function closeEditor() {
-    const editor = ace.edit('editor');
-    editor.destroy();
-    // class属性の値が残り表示されてしまう
-    const classList = editor.container.classList;
-    classList.forEach(className => {
-        if (className.startsWith('ace')) {
-            classList.remove(className);
-        }
-    });
-}
-
-async function apiActivated(state, client) {
-    const session = new Session(client);
-
-    setupEditor(session);
-    await loadPhoto(session);
-
-    switch (state.action) {
-        case 'create':
-            await create(session, state.folderId);
-            break;
-        case 'open':
-            await open(session, state.ids);
-            break;
-        default:
-            console.error(`Unknown action '${state.action}'`)
-    }
-}
-
-function apiDeactivated() {
-    closeEditor();
-    unloadPhoto();
-}
-
 async function main() {
     console.debug(window.location.href);
 
@@ -323,12 +203,26 @@ async function main() {
     const state = JSON.parse(decodeURIComponent(queryParam.get('state')));
     console.debug(state);
 
-    setOnApiActivated(async (client) => {
-        if (client !== null) {
-            await apiActivated(state, client);
-        } else {
-            apiDeactivated();
-        }
+    listenIdToken(async (idToken) => {
+        const tokenInfo = await getTokenInfo(idToken);
+        console.debug(tokenInfo);
+        loadPicture(tokenInfo.picture());
+        Content.create(tokenInfo, state, async (content) => {
+            const session = new Session(idToken, content);
+            setupEditor(session);
+
+            switch (state.action) {
+                case 'create':
+                    await content.create();
+                    break;
+                case 'open':
+                    const text = await content.loadText();
+                    session.setText(text);
+                    break;
+                default:
+                    console.error(`Unknown action '${state.action}'`)
+            }
+        });
     });
 }
 
