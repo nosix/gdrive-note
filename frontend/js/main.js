@@ -61,6 +61,7 @@ class Session {
     onChangedConfig(config) {
         const gpt = document.getElementById('gpt');
         gpt.classList.remove('gpt-error');
+        gpt.disabled = false;
         this.editor.setOptions(config.getAceOptions());
         this.config = config;
     }
@@ -110,6 +111,7 @@ async function completion(session) {
     const gpt = document.getElementById('gpt');
     if (session.idToken == null) {
         gpt.classList.add('gpt-error');
+        gpt.disabled = true;
         return;
     }
     const config = {
@@ -130,6 +132,7 @@ async function completion(session) {
         // TODO insert result into editor
     } catch (e) {
         gpt.classList.add('gpt-error');
+        gpt.disabled = true;
         console.error(e);
     }
 }
@@ -138,7 +141,8 @@ function setupEditor(session) {
     const editor = ace.edit('editor');
     const viewer = new Viewer('viewer');
     editor.commands.addCommand({
-        name: 'Save',
+        name: 'save',
+        description: 'Save',
         bindKey: {win: 'Ctrl-S', mac: 'Command-S'},
         exec: async (editor) => {
             await session.content.saveText(editor.getValue());
@@ -146,7 +150,8 @@ function setupEditor(session) {
         readOnly: false,
     });
     editor.commands.addCommand({
-        name: 'Preview',
+        name: 'preview',
+        description: 'Preview markdown',
         bindKey: {win: 'Ctrl-Alt-P', mac: 'Ctrl-Option-P'},
         exec: async (editor) => {
             viewer.toggleEnabled(editor);
@@ -155,7 +160,8 @@ function setupEditor(session) {
         scrollIntoView: "cursor",
     });
     editor.commands.addCommand({
-        name: 'GPT completion',
+        name: 'gptCompletion',
+        description: 'GPT completion',
         bindKey: {win: 'Alt-Space', mac: 'Option-Space'},
         exec: async () => {
             await completion(session);
@@ -169,6 +175,13 @@ function setupEditor(session) {
     editor.selection.on('changeCursor', () => {
         session.onChangedCursor();
     });
+
+    document.getElementById('gpt').onclick = () => {
+        editor.execCommand('gptCompletion');
+    };
+    document.getElementById('tips').onclick = () => {
+        editor.execCommand('openCommandPallete'); // https://github.com/ajaxorg/ace/issues/5105
+    };
 
     const headerHeight = document.querySelector('nav').offsetHeight;
     const footerHeight = document.querySelector('footer').offsetHeight;
@@ -190,7 +203,7 @@ async function main() {
     console.debug(state);
 
     listenIdToken(async (idToken) => {
-        const tokenInfo = await getTokenInfo(idToken);
+        const tokenInfo = await getTokenInfo(idToken); // FIXME 取得に失敗することがある
         console.debug(tokenInfo);
         loadPicture(tokenInfo.picture());
         Content.create(tokenInfo, state, async (content) => {
