@@ -33,7 +33,7 @@ nav {
 
 body>footer {
     display: flex;
-    flex-wrap: wrap-reverse;
+    justify-content: space-between;
     align-items: center;
     line-height: 1.2;
     padding: 1rem 0;
@@ -42,7 +42,7 @@ body>footer {
 }
 
 #gpt {
-    flex-shrink: 0;
+    flex: none;
     font-size: 80%;
     background-color: var(--accent-bg);
     color: var(--text-light);
@@ -57,16 +57,23 @@ body>footer {
     border: 1px solid var(--off);
 }
 
-#status {
-    flex-grow: 1;
+#statusbar {
+    flex: 1;
     font-size: 80%;
     color: var(--text-light);
-    padding: 0.3rem 0.5rem;
+    padding: 0.3rem 0;
     text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#statusbar>span {
+    padding-left: 0.5rem;
 }
 
 #tips {
-    flex-shrink: 0;
+    flex: none;
     font-size: 80%;
     background-color: var(--accent-bg);
     color: var(--text-light);

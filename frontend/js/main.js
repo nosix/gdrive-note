@@ -3,15 +3,19 @@ import dompurify from 'dompurify';
 import axios from 'axios';
 import {State} from './state';
 import {Content} from './content.js';
+import {StatusBar} from "./statusbar.js";
 import {listenIdToken} from './idtoken.js';
 import {getTokenInfo} from './tokeninfo.js';
 import {parseConfig, Config} from './config.js';
 import {GPT_FUNCTION_URL} from './properties.js';
 
+const DEFAULT_STATUS_TIMEOUT = 5000;
+
 class Session {
-    constructor(idToken, content) {
+    constructor(idToken, content, status) {
         this.idToken = idToken;
         this.content = content;
+        this.status = status;
         this.config = new Config();
         this.editor = null;
         this.viewer = null;
@@ -39,9 +43,8 @@ class Session {
     markEdited() {
         const pageTitle = document.getElementById('title');
         pageTitle.classList.add('toggle-enabled');
-        pageTitle.onclick = async () => {
-            await this.content.saveText(this.editor.getValue());
-            this.clearEdited();
+        pageTitle.onclick = () => {
+            this.editor.execCommand('save');
         };
         this.edited = true;
     }
@@ -112,8 +115,15 @@ async function completion(session) {
     if (session.idToken == null) {
         gpt.classList.add('gpt-error');
         gpt.disabled = true;
+        session.status.show('No ID token found.', DEFAULT_STATUS_TIMEOUT);
         return;
     }
+    const prompt = session.editor.getSelectedText();
+    if (!prompt) {
+        session.status.show('The text is not selected.', DEFAULT_STATUS_TIMEOUT);
+        return;
+    }
+
     const config = {
         headers: {
             'Content-Type': 'application/json',
@@ -122,7 +132,7 @@ async function completion(session) {
     }
     const requestBody = {
         model: session.config.getGptModel(),
-        prompt: session.editor.getSelectedText(),
+        prompt: prompt,
         temperature: session.config.getGptTemperature(),
         max_tokens: session.config.getGptMaxTokens(),
     };
@@ -131,21 +141,26 @@ async function completion(session) {
         console.debug(response.data);
         // TODO insert result into editor
     } catch (e) {
+        console.error(e);
         gpt.classList.add('gpt-error');
         gpt.disabled = true;
-        console.error(e);
+        session.status.show(e.message, DEFAULT_STATUS_TIMEOUT);
     }
 }
 
 function setupEditor(session) {
     const editor = ace.edit('editor');
     const viewer = new Viewer('viewer');
+
     editor.commands.addCommand({
         name: 'save',
         description: 'Save',
         bindKey: {win: 'Ctrl-S', mac: 'Command-S'},
         exec: async (editor) => {
+            const statusId = session.status.show('Saving...');
             await session.content.saveText(editor.getValue());
+            session.status.clear(statusId);
+            session.clearEdited();
         },
         readOnly: false,
     });
@@ -202,12 +217,18 @@ async function main() {
     const state = new State(queryParam.get('state'));
     console.debug(state);
 
+    const status = new StatusBar();
+
     listenIdToken(async (idToken) => {
         const tokenInfo = await getTokenInfo(idToken); // FIXME 取得に失敗することがある
         console.debug(tokenInfo);
+        if (tokenInfo === null) {
+            status.show('No token info found.', DEFAULT_STATUS_TIMEOUT);
+            return;
+        }
         loadPicture(tokenInfo.picture());
         Content.create(tokenInfo, state, async (content) => {
-            const session = new Session(idToken, content);
+            const session = new Session(idToken, content, status);
             setupEditor(session);
 
             switch (state.action()) {
