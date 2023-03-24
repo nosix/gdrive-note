@@ -139,7 +139,7 @@ async function completion(session) {
     try {
         const response = await axios.post(`${GPT_FUNCTION_URL}/completion`, requestBody, config);
         console.debug(response.data);
-        // TODO insert result into editor
+        session.editor.session.insert(session.editor.getCursorPosition(), `${response.data}\n`);
     } catch (e) {
         console.error(e);
         gpt.classList.add('gpt-error');
