@@ -4,16 +4,13 @@ export function listenIdToken(callback) {
         console.debug(`Android:idToken:${idToken}`);
         callback(idToken);
     } else {
-        const idToken = sessionStorage.getItem('idToken');
-        console.debug(`Web:idToken:${idToken}`);
-        if (idToken) {
+        window.addEventListener('idToken', () => {
+            const idToken = sessionStorage.getItem('idToken');
+            console.debug(`Web:idToken:${idToken}`);
             callback(idToken);
-        } else {
-            window.addEventListener('storage', (event) => {
-                if (event.storageArea === sessionStorage && event.key === 'idToken') {
-                    callback(sessionStorage.getItem('idToken'));
-                }
-            });
+        });
+        if (sessionStorage.getItem('idToken')) {
+            window.dispatchEvent(new CustomEvent('idToken'));
         }
     }
 }
