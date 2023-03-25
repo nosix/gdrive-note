@@ -12,8 +12,7 @@
 
 nav {
     display: flex;
-    flex-wrap: wrap-reverse;
-    align-items: center;
+    justify-content: space-between;
     line-height: 1.2;
     padding: 1rem 0
 }
@@ -21,17 +20,38 @@ nav {
 #title {
     font-size: 150%;
     font-weight: 700;
+    background-color: var(--bg);
+    color: var(--accent);
+}
+
+#title:disabled {
+    color: var(--text-light);
+}
+
+#toolbar {
+    margin: auto 0;
+}
+
+#toolbar > button {
+    font-size: 80%;
+    background-color: var(--accent-bg);
+    color: var(--text);
+    padding: 0.3rem 0.5rem;
+}
+
+#toolbar > button:disabled {
+    background-color: var(--bg);
+    color: var(--text-light);
 }
 
 #account {
-    margin-left: auto;
-    vertical-align: middle;
+    margin: auto 0;
     width: 20px;
     height: 20px;
     border-radius: 50%;
 }
 
-body>footer {
+body > footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -47,13 +67,10 @@ body>footer {
     background-color: var(--accent-bg);
     color: var(--text-light);
     padding: 0.3rem 0.5rem;
-}
-
-.gpt-on {
     border: 1px solid var(--on);
 }
 
-.gpt-error {
+#gpt:disabled {
     border: 1px solid var(--off);
 }
 
@@ -68,7 +85,7 @@ body>footer {
     text-overflow: ellipsis;
 }
 
-#statusbar>span {
+#statusbar > span {
     padding-left: 0.5rem;
 }
 
@@ -80,7 +97,7 @@ body>footer {
     padding: 0.3rem 0.5rem 0.3rem 0;
 }
 
-#tips>kbd {
+#tips > kbd {
     margin-right: 0.5rem;
 }
 
@@ -88,11 +105,28 @@ body>footer {
     overflow: auto;
 }
 
-.toggle-enabled {
-    color: var(--accent);
-}
+@media (max-width: 500px) {
+    nav {
+        flex-wrap: wrap;
+    }
 
-.toggle-enabled:focus,.toggle-enabled:hover {
-    filter: brightness(1.4);
-    cursor: pointer
+    #title {
+        margin-bottom: 0.5rem;
+    }
+
+    #toolbar {
+        text-align: left;
+    }
+
+    #account {
+        text-align: right;
+    }
+
+    #tips {
+        padding: 0.3rem 0.5rem;
+    }
+
+    #tips > kbd {
+        display: none;
+    }
 }

@@ -4,6 +4,7 @@ import axios from 'axios';
 import {State} from './state';
 import {Content} from './content.js';
 import {StatusBar} from "./statusbar.js";
+import {UndoManager} from './undo.js';
 import {listenIdToken} from './idtoken.js';
 import {getTokenInfo} from './tokeninfo.js';
 import {parseConfig, Config} from './config.js';
@@ -19,41 +20,50 @@ class Session {
         this.config = new Config();
         this.editor = null;
         this.viewer = null;
-        // テキスト変更後、ファイルを保存するまで true
-        this.edited = false;
+        this.undoManager = null;
+        this.buttons = {
+            title: document.getElementById('title'),
+            save: document.getElementById('save'),
+            undo: document.getElementById('undo'),
+            redo: document.getElementById('redo'),
+            gpt: document.getElementById('gpt'),
+            tips: document.getElementById('tips'),
+        };
+    }
+
+    setEditor(editor, viewer) {
+        this.editor = editor;
+        this.viewer = viewer;
+        this.undoManager = new UndoManager(editor.session.getUndoManager());
     }
 
     setText(text) {
         console.assert(this.editor !== null);
         this.editor.setValue(text, -1);
         // Undoで戻れるのはコンテンツを設定した直後まで
-        this.editor.session.getUndoManager().reset();
+        this.undoManager.reset();
     }
 
-    onChanged(delta) {
+    onChanged() {
         this.onChangedConfig(parseConfig(this.editor.getValue()));
         if (this.viewer.isEnabled()) {
             this.viewer.setContent(this.editor.getValue());
         }
-        if (!this.edited) {
-            this.markEdited();
-        }
+        this.updateButtonState();
     }
 
-    markEdited() {
-        const pageTitle = document.getElementById('title');
-        pageTitle.classList.add('toggle-enabled');
-        pageTitle.onclick = () => {
-            this.editor.execCommand('save');
-        };
-        this.edited = true;
+    bookmark() {
+        this.undoManager.bookmark();
+        this.updateButtonState();
     }
 
-    clearEdited() {
-        const pageTitle = document.getElementById('title');
-        pageTitle.classList.remove('toggle-enabled');
-        pageTitle.onclick = undefined;
-        this.edited = false;
+    updateButtonState() {
+        const undoManager = this.undoManager;
+        const saved = undoManager.isAtBookmark();
+        this.buttons.title.disabled = saved;
+        this.buttons.save.disabled = saved;
+        this.buttons.undo.disabled = !undoManager.canUndo();
+        this.buttons.redo.disabled = !undoManager.canRedo();
     }
 
     onChangedCursor() {
@@ -62,9 +72,7 @@ class Session {
     }
 
     onChangedConfig(config) {
-        const gpt = document.getElementById('gpt');
-        gpt.classList.remove('gpt-error');
-        gpt.disabled = false;
+        this.buttons.gpt.disabled = false;
         this.editor.setOptions(config.getAceOptions());
         this.config = config;
     }
@@ -111,10 +119,8 @@ function loadPicture(url) {
 }
 
 async function completion(session) {
-    const gpt = document.getElementById('gpt');
     if (session.idToken == null) {
-        gpt.classList.add('gpt-error');
-        gpt.disabled = true;
+        session.buttons.gpt.disabled = true;
         session.status.show('No ID token found.', DEFAULT_STATUS_TIMEOUT);
         return;
     }
@@ -142,8 +148,7 @@ async function completion(session) {
         session.editor.session.insert(session.editor.getCursorPosition(), `${response.data}\n`);
     } catch (e) {
         console.error(e);
-        gpt.classList.add('gpt-error');
-        gpt.disabled = true;
+        session.buttons.gpt.disabled = true;
         session.status.show(e.message, DEFAULT_STATUS_TIMEOUT);
     }
 }
@@ -160,7 +165,7 @@ function setupEditor(session) {
             const statusId = session.status.show('Saving...');
             await session.content.saveText(editor.getValue());
             session.status.clear(statusId);
-            session.clearEdited();
+            session.bookmark();
         },
         readOnly: false,
     });
@@ -183,7 +188,9 @@ function setupEditor(session) {
         },
         readOnly: false,
     });
+
     editor.session.setMode('ace/mode/markdown');
+
     editor.session.on('change', (delta) => {
         session.onChanged(delta);
     });
@@ -191,19 +198,30 @@ function setupEditor(session) {
         session.onChangedCursor();
     });
 
-    document.getElementById('gpt').onclick = () => {
+    session.buttons.title.onclick = () => {
+        editor.execCommand('save');
+    };
+    session.buttons.save.onclick = () => {
+        editor.execCommand('save');
+    };
+    session.buttons.undo.onclick = () => {
+        session.undoManager.undo();
+    };
+    session.buttons.redo.onclick = () => {
+        session.undoManager.redo();
+    };
+    session.buttons.gpt.onclick = () => {
         editor.execCommand('gptCompletion');
     };
-    document.getElementById('tips').onclick = () => {
+    session.buttons.tips.onclick = () => {
         editor.execCommand('openCommandPallete'); // https://github.com/ajaxorg/ace/issues/5105
-    };
+    }
 
     const headerHeight = document.querySelector('nav').offsetHeight;
     const footerHeight = document.querySelector('footer').offsetHeight;
     editor.container.style.height = `calc(100vh - ${headerHeight}px - ${footerHeight}px)`
 
-    session.editor = editor;
-    session.viewer = viewer;
+    session.setEditor(editor, viewer);
 }
 
 async function main() {
@@ -238,7 +256,7 @@ async function main() {
                 case 'open':
                     const text = await content.loadText();
                     session.setText(text);
-                    session.clearEdited();
+                    session.bookmark();
                     break;
                 default:
                     console.error(`Unknown action '${state.action()}'`)
