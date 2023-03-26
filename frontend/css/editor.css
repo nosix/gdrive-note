@@ -14,7 +14,7 @@ nav {
     display: flex;
     justify-content: space-between;
     line-height: 1.2;
-    padding: 1rem 0
+    padding: 0.7rem 0
 }
 
 #title {
@@ -22,6 +22,7 @@ nav {
     font-weight: 700;
     background-color: var(--bg);
     color: var(--accent);
+    padding: 0;
 }
 
 #title:disabled {
