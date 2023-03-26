@@ -151,9 +151,13 @@ async function completion(session) {
     }
     const requestBody = {
         model: session.config.getGptModel(),
-        prompt: prompt,
-        temperature: session.config.getGptTemperature(),
         max_tokens: session.config.getGptMaxTokens(),
+        temperature: session.config.getGptTemperature(),
+        top_p: session.config.getGptTopP(),
+        messages: [
+            {role: "system", content: session.config.getGptSystemMessage()},
+            {role: "user", content: prompt}
+        ],
     };
     try {
         const response = await axios.post(`${GPT_FUNCTION_URL}/completion`, requestBody, config);

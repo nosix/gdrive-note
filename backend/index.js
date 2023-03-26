@@ -55,9 +55,13 @@ async function completion(req, res) {
         return;
     }
     try {
-        const completion = await openai.createCompletion(req.body);
-        res.status(200).send(completion);
+        const completion = await openai.createChatCompletion(req.body);
+        res.status(200).send(completion.data.choices[0].message.content);
     } catch (e) {
-        res.status(e.response.status).send(e.response.statusText);
+        if (e.response) {
+            res.status(e.response.status).send(e.response.statusText);
+        } else {
+            res.status(500).send(e.message);
+        }
     }
 }
