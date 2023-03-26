@@ -21,6 +21,7 @@ class Session {
         this.editor = null;
         this.viewer = null;
         this.undoManager = null;
+        this.contentArea = document.getElementById('contentArea');
         this.buttons = {
             title: document.getElementById('title'),
             save: document.getElementById('save'),
@@ -76,6 +77,27 @@ class Session {
         this.editor.setOptions(config.getAceOptions());
         this.config = config;
     }
+
+    resize() {
+        const headerHeight = document.querySelector('nav').offsetHeight;
+        const footerHeight = document.querySelector('footer').offsetHeight;
+        this.contentArea.style.height = `calc(100vh - ${headerHeight}px - ${footerHeight}px)`
+        const contentAreaHeight = this.contentArea.offsetHeight;
+
+        const e = this.editor;
+        const v = this.viewer;
+
+        if (v.isEnabled()) {
+            const viewerHeight = contentAreaHeight / 2;
+            v.container.style.height = `${viewerHeight}px`;
+            e.container.style.height = `${contentAreaHeight - viewerHeight}px`;
+        } else {
+            v.container.style.height = '0px';
+            e.container.style.height = `${contentAreaHeight}px`;
+        }
+
+        e.resize();
+    }
 }
 
 class Viewer {
@@ -95,22 +117,12 @@ class Viewer {
         this.container.scrollTop = this.container.scrollHeight * positionRatio - this.container.clientHeight / 2;
     }
 
-    toggleEnabled(editor) {
+    toggleEnabled(session) {
         this.container.classList.toggle('viewer-enabled');
         if (this.isEnabled()) {
-            this.setContent(editor.getValue());
-            const editorHeight = editor.container.offsetHeight;
-            const viewerHeight = editorHeight / 2;
-            this.container.style.height = `${viewerHeight}px`;
-            editor.container.style.height = `${editorHeight - viewerHeight}px`;
-            editor.resize();
-        } else {
-            const editorHeight = editor.container.offsetHeight;
-            const viewerHeight = this.container.offsetHeight;
-            this.container.style.height = '0px';
-            editor.container.style.height = `${editorHeight + viewerHeight}px`;
-            editor.resize();
+            this.setContent(session.editor.getValue());
         }
+        session.resize();
     }
 }
 
@@ -173,8 +185,8 @@ function setupEditor(session) {
         name: 'preview',
         description: 'Preview markdown',
         bindKey: {win: 'Ctrl-Alt-P', mac: 'Ctrl-Option-P'},
-        exec: async (editor) => {
-            viewer.toggleEnabled(editor);
+        exec: async () => {
+            viewer.toggleEnabled(session);
         },
         readOnly: true,
         scrollIntoView: "cursor",
@@ -217,10 +229,6 @@ function setupEditor(session) {
         editor.execCommand('openCommandPallete'); // https://github.com/ajaxorg/ace/issues/5105
     }
 
-    const headerHeight = document.querySelector('nav').offsetHeight;
-    const footerHeight = document.querySelector('footer').offsetHeight;
-    editor.container.style.height = `calc(100vh - ${headerHeight}px - ${footerHeight}px)`
-
     session.setEditor(editor, viewer);
 }
 
@@ -248,6 +256,11 @@ async function main() {
         Content.create(tokenInfo, state, async (content) => {
             const session = new Session(idToken, content, status);
             setupEditor(session);
+
+            session.resize();
+            window.addEventListener('resize', () => {
+                session.resize();
+            });
 
             switch (state.action()) {
                 case 'create':
