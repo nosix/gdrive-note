@@ -27,6 +27,7 @@ class Session {
             save: document.getElementById('save'),
             undo: document.getElementById('undo'),
             redo: document.getElementById('redo'),
+            preview: document.getElementById('preview'),
             gpt: document.getElementById('gpt'),
             tips: document.getElementById('tips'),
         };
@@ -221,6 +222,9 @@ function setupEditor(session) {
     };
     session.buttons.redo.onclick = () => {
         session.undoManager.redo();
+    };
+    session.buttons.preview.onclick = () => {
+        viewer.toggleEnabled(session);
     };
     session.buttons.gpt.onclick = () => {
         editor.execCommand('gptCompletion');
