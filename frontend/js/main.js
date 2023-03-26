@@ -9,6 +9,7 @@ import {listenIdToken} from './idtoken.js';
 import {getTokenInfo} from './tokeninfo.js';
 import {parseConfig, Config} from './config.js';
 import {GPT_FUNCTION_URL} from './properties.js';
+import {createChatRequestBody} from "./completion.js";
 
 const DEFAULT_STATUS_TIMEOUT = 5000;
 
@@ -149,20 +150,12 @@ async function completion(session) {
             'Authorization': `Bearer ${session.idToken}`,
         }
     }
-    const requestBody = {
-        model: session.config.getGptModel(),
-        max_tokens: session.config.getGptMaxTokens(),
-        temperature: session.config.getGptTemperature(),
-        top_p: session.config.getGptTopP(),
-        messages: [
-            {role: "system", content: session.config.getGptSystemMessage()},
-            {role: "user", content: prompt}
-        ],
-    };
     try {
+        const requestBody = createChatRequestBody(prompt, session.config);
         const response = await axios.post(`${GPT_FUNCTION_URL}/completion`, requestBody, config);
         console.debug(response.data);
-        session.editor.session.insert(session.editor.getCursorPosition(), `${response.data}\n`);
+        const result = requestBody.messages.length >= 3 ? `assistant:\n\n${response.data}` : response.data;
+        session.editor.session.insert(session.editor.getCursorPosition(), `${result}\n`);
     } catch (e) {
         console.error(e);
         session.buttons.gpt.disabled = true;

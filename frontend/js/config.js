@@ -29,7 +29,7 @@ export class Config {
         this.__gptTemperature = temp !== undefined && temp >= 0 && temp <= 2 ? temp : 1;
         const topP = gptParams['topP'];
         this.__gptTopP = topP !== undefined && topP >= 0 && topP <= 1 ? topP : 1;
-        this.__gptSystemMessage = gptParams['systemMessage'] || "You are a helpful assistant.";
+        this.__gptSystemMessage = gptParams['systemMessage'] || "";
     }
 
     /**
@@ -77,7 +77,7 @@ export class Config {
 
     /**
      * チャットメッセージの先頭で送られる system メッセージ (gptParams.systemMessage)
-     * @returns {string} (default: "You are a helpful assistant.")
+     * @returns {string} (default: "")
      */
     getGptSystemMessage() {
         return this.__gptSystemMessage;
