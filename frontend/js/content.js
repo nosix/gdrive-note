@@ -63,6 +63,7 @@ class ContentOnWeb {
                     prompt: '',
                     hint: tokenInfo.email(),
                     callback: (tokenResponse) => {
+                        console.debug(tokenResponse);
                         callback(new ContentOnWeb(state, gapi.client, tokenResponse.access_token));
                     },
                 });

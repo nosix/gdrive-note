@@ -247,10 +247,11 @@ async function main() {
     const status = new StatusBar();
 
     listenIdToken(async (idToken) => {
-        const tokenInfo = await getTokenInfo(idToken); // FIXME 取得に失敗することがある
+        const tokenInfo = await getTokenInfo(idToken);
         console.debug(tokenInfo);
         if (tokenInfo === null) {
             status.show('No token info found.', DEFAULT_STATUS_TIMEOUT);
+            authenticate();
             return;
         }
         loadPicture(tokenInfo.picture());

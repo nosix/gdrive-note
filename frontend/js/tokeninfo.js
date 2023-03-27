@@ -34,6 +34,7 @@ export async function getTokenInfo(idToken) {
     try {
         const response = await axios.post('https://oauth2.googleapis.com/tokeninfo', '', config);
         console.debug(response.data);
+        console.debug(Date.now() / 1000 + 3600);
         return new TokenInfo(response.data);
     } catch (e) {
         console.error(e);
