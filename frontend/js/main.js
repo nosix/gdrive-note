@@ -2,7 +2,7 @@ import {marked} from 'marked';
 import dompurify from 'dompurify';
 import axios from 'axios';
 import {State} from './state';
-import {Content} from './content.js';
+import {ContentStorage} from './storage.js';
 import {StatusBar} from "./statusbar.js";
 import {UndoManager} from './undo.js';
 import {listenIdToken} from './idtoken.js';
@@ -14,11 +14,11 @@ import {createChatRequestBody} from "./completion.js";
 const DEFAULT_STATUS_TIMEOUT = 5000;
 
 class Session {
-    constructor(idToken, content, status) {
-        this.idToken = idToken;
-        this.content = content;
+    constructor(status) {
         this.status = status;
         this.config = new Config();
+        this.idToken = null;
+        this.content = null;
         this.editor = null;
         this.viewer = null;
         this.undoManager = null;
@@ -32,6 +32,11 @@ class Session {
             gpt: document.getElementById('gpt'),
             tips: document.getElementById('tips'),
         };
+    }
+
+    reset(idToken, content) {
+        this.idToken = idToken;
+        this.content = content;
     }
 
     setEditor(editor, viewer) {
@@ -160,6 +165,9 @@ async function completion(session) {
         console.error(e);
         session.buttons.gpt.disabled = true;
         session.status.show(e.message, DEFAULT_STATUS_TIMEOUT);
+        if (e.response && e.response.status === 401) {
+            authenticate();
+        }
     }
 }
 
@@ -244,25 +252,25 @@ async function main() {
     const state = new State(queryParam.get('state'));
     console.debug(state);
 
-    const status = new StatusBar();
+    const session = new Session(new StatusBar());
+    setupEditor(session);
+
+    session.resize();
+    window.addEventListener('resize', () => {
+        session.resize();
+    });
 
     listenIdToken(async (idToken) => {
         const tokenInfo = await getTokenInfo(idToken);
         console.debug(tokenInfo);
         if (tokenInfo === null) {
-            status.show('No token info found.', DEFAULT_STATUS_TIMEOUT);
+            session.status.show('No token info found.', DEFAULT_STATUS_TIMEOUT);
             authenticate();
             return;
         }
         loadPicture(tokenInfo.picture());
-        Content.create(tokenInfo, state, async (content) => {
-            const session = new Session(idToken, content, status);
-            setupEditor(session);
-
-            session.resize();
-            window.addEventListener('resize', () => {
-                session.resize();
-            });
+        ContentStorage.create(tokenInfo, state, async (content) => {
+            session.reset(idToken, content);
 
             switch (state.action()) {
                 case 'create':

@@ -1,11 +1,11 @@
-export class Content {
+export class ContentStorage {
 
     static create(tokenInfo, state, callback) {
         if (window.content) {
-            callback(new Content(new ContentOnAndroid(window.content)));
+            callback(new ContentStorage(new ContentStorageOnAndroid(window.content)));
         } else {
-            ContentOnWeb.create(tokenInfo, state, (impl) => {
-                callback(new Content(impl));
+            ContentStorageOnWeb.create(tokenInfo, state, (impl) => {
+                callback(new ContentStorage(impl));
             });
         }
     }
@@ -39,7 +39,7 @@ async function loadScript(url) {
     });
 }
 
-class ContentOnWeb {
+class ContentStorageOnWeb {
 
     static SCOPES = [
         'https://www.googleapis.com/auth/drive.appdata',
@@ -55,16 +55,16 @@ class ContentOnWeb {
             await loadScript('https://apis.google.com/js/api.js');
             gapi.load('client', async () => {
                 await gapi.client.init({
-                    discoveryDocs: ContentOnWeb.DISCOVERY_DOCS,
+                    discoveryDocs: ContentStorageOnWeb.DISCOVERY_DOCS,
                 });
                 const tokenClient = google.accounts.oauth2.initTokenClient({
                     client_id: tokenInfo.clientId(),
-                    scope: ContentOnWeb.SCOPES,
+                    scope: ContentStorageOnWeb.SCOPES,
                     prompt: '',
                     hint: tokenInfo.email(),
                     callback: (tokenResponse) => {
                         console.debug(tokenResponse);
-                        callback(new ContentOnWeb(state, gapi.client, tokenResponse.access_token));
+                        callback(new ContentStorageOnWeb(state, gapi.client, tokenResponse.access_token));
                     },
                 });
                 tokenClient.requestAccessToken();
@@ -144,7 +144,7 @@ class ContentOnWeb {
     }
 }
 
-class ContentOnAndroid {
+class ContentStorageOnAndroid {
 
     constructor(content) {
         this.__content = content;
