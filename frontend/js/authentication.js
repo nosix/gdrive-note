@@ -20,13 +20,17 @@ if (isAndroid) {
     // 認証が完了したら、AndroidからonAuthenticatedを呼び出す
     window.onAuthenticated = onAndroidAuthenticated;
 } else {
+    let lastAuthenticatedTime = Date.now();
+
     function authenticateOnWeb() {
+        const now = Date.now();
         sessionStorage.removeItem('idToken');
         google.accounts.id.initialize({
             client_id: CLIENT_ID,
-            auto_select: true,
+            auto_select: (now - lastAuthenticatedTime) > 60 * 1000, // 1分を超えていれば自動選択
             callback: onAuthenticated
         });
+        lastAuthenticatedTime = now;
         google.accounts.id.prompt();
     }
 

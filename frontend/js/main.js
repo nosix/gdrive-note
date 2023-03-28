@@ -2,16 +2,16 @@ import {marked} from 'marked';
 import dompurify from 'dompurify';
 import axios from 'axios';
 import {State} from './state';
-import {ContentStorage} from './storage.js';
 import {StatusBar} from "./statusbar.js";
 import {UndoManager} from './undo.js';
 import {listenIdToken} from './idtoken.js';
 import {getTokenInfo} from './tokeninfo.js';
+import {createChatRequestBody} from "./completion.js";
+import {ContentStorage, PermissionDeniedError} from './storage.js';
 import {parseConfig, Config} from './config.js';
 import {GPT_FUNCTION_URL} from './properties.js';
-import {createChatRequestBody} from "./completion.js";
 
-const DEFAULT_STATUS_TIMEOUT = 5000;
+const DEFAULT_STATUS_TIMEOUT = 10000;
 
 class Session {
     constructor(status) {
@@ -181,7 +181,14 @@ function setupEditor(session) {
         bindKey: {win: 'Ctrl-S', mac: 'Command-S'},
         exec: async (editor) => {
             const statusId = session.status.show('Saving...');
-            await session.content.saveText(editor.getValue());
+            try {
+                await session.content.saveText(editor.getValue());
+            } catch (e) {
+                if (e instanceof PermissionDeniedError) {
+                    session.status.show('Access denied. The system will reauthenticate.', DEFAULT_STATUS_TIMEOUT);
+                    authenticate();
+                }
+            }
             session.status.clear(statusId);
             session.bookmark();
         },
@@ -272,17 +279,24 @@ async function main() {
         ContentStorage.create(tokenInfo, state, async (content) => {
             session.reset(idToken, content);
 
-            switch (state.action()) {
-                case 'create':
-                    await content.create();
-                    break;
-                case 'open':
-                    const text = await content.loadText();
-                    session.setText(text);
-                    session.bookmark();
-                    break;
-                default:
-                    console.error(`Unknown action '${state.action()}'`)
+            try {
+                switch (state.action()) {
+                    case 'create':
+                        await content.create();
+                        break;
+                    case 'open':
+                        const text = await content.loadText();
+                        session.setText(text);
+                        session.bookmark();
+                        break;
+                    default:
+                        console.error(`Unknown action '${state.action()}'`)
+                }
+            } catch (e) {
+                if (e instanceof PermissionDeniedError) {
+                    session.status.show('Access denied. The system will reauthenticate.', DEFAULT_STATUS_TIMEOUT);
+                    authenticate();
+                }
             }
         });
     });

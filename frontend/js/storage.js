@@ -1,3 +1,11 @@
+export class PermissionDeniedError extends Error {}
+
+function checkPermission(statusCode) {
+    if (statusCode === 403) {
+        throw new PermissionDeniedError();
+    }
+}
+
 export class ContentStorage {
 
     static create(tokenInfo, state, callback) {
@@ -64,7 +72,7 @@ class ContentStorageOnWeb {
                     hint: tokenInfo.email(),
                     callback: (tokenResponse) => {
                         console.debug(tokenResponse);
-                        callback(new ContentStorageOnWeb(state, gapi.client, tokenResponse.access_token));
+                        callback(new ContentStorageOnWeb(state, gapi.client));
                     },
                 });
                 tokenClient.requestAccessToken();
@@ -72,10 +80,9 @@ class ContentStorageOnWeb {
         })();
     }
 
-    constructor(state, client, accessToken) {
+    constructor(state, client) {
         this.__state = state;
         this.__client = client;
-        this.__accessToken = accessToken;
         this.__fileId = null;
     }
 
@@ -93,7 +100,8 @@ class ContentStorageOnWeb {
             console.debug(response);
             this.__fileId = response.result.id;
         } catch (e) {
-            console.error(e.message);
+            console.error(e.result.error.message);
+            checkPermission(e.result.error.code);
         }
     }
 
@@ -116,7 +124,8 @@ class ContentStorageOnWeb {
             this.__fileId = fileId;
             return response.body;
         } catch (e) {
-            console.error(e.message);
+            console.error(e.result.error.message);
+            checkPermission(e.result.error.code);
             return null;
         }
     }
@@ -139,7 +148,8 @@ class ContentStorageOnWeb {
             console.debug(response);
             this.__fileId = response.result.id;
         } catch (e) {
-            console.error(e.message);
+            console.error(e.result.error.message);
+            checkPermission(e.result.error.code);
         }
     }
 }
